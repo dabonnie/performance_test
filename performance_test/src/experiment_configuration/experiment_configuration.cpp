@@ -255,12 +255,15 @@ void ExperimentConfiguration::setup(int argc, char ** argv)
       }
     }
     m_is_setup = true;
-    // Logfile needs to be opened at the end, as the experiment configuration influences the
-    // filename.
+
     if (vm.count("logfile")) {
       m_logfile = vm["logfile"].as<std::string>();
-      open_file();
     }
+
+    //save output to a file, open file will provide a default name if not specified
+    open_file();
+
+
   } catch (const std::exception & e) {
     std::cerr << "ERROR: ";
     std::cerr << e.what() << std::endl;
@@ -418,11 +421,19 @@ void ExperimentConfiguration::check_setup() const
 void ExperimentConfiguration::open_file()
 {
   check_setup();
-  auto t = std::time(nullptr);
-  auto tm = *std::localtime(&t);
-  std::ostringstream oss;
-  oss << m_logfile.c_str() << "_" << m_topic_name << std::put_time(&tm, "_%d-%m-%Y_%H-%M-%S");
-  m_final_logfile_name = oss.str();
+
+    if(m_logfile.empty()) {
+        //if the file name is empty provide a default
+        auto t = std::time(nullptr);
+        auto tm = *std::localtime(&t);
+        std::ostringstream oss;
+        oss << "log" << "_" << m_topic_name << std::put_time(&tm, "_%d-%m-%Y_%H-%M-%S");
+        m_final_logfile_name = oss.str();
+    } else {
+        //allow a user to specify their own logfile name
+        m_final_logfile_name = m_logfile;
+    }
+
   m_os.open(m_final_logfile_name, std::ofstream::out);
 }
 
